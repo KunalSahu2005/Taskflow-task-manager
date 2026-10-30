@@ -8,6 +8,10 @@ A beginner-friendly full stack internship project. Users can register, log in wi
 - Login sessions are stored in MongoDB.
 - Add, edit, complete, search, filter, and delete tasks.
 - Optional task descriptions and due dates.
+- Add a subject and start time to one or more weekdays at once. The schedule repeats weekly.
+- View one weekday at a time using the Monday–Sunday buttons; add or delete subjects separately for each weekday.
+- Edit or remove a class when that weekday's schedule changes.
+- Mark a class on any past, current, or future date as **Attended** or **Not attended**. Weekly totals show both counts for every subject.
 - Each user can access only their own tasks.
 - Responsive dashboard with task counts.
 
@@ -52,12 +56,25 @@ Open **http://localhost:3000** in your browser and create an account. Keep the P
 
 If you installed the earlier MySQL version of this project, run `npm.cmd install` again after changing to these project files. It installs the MongoDB packages and updates `package-lock.json`.
 
+## Put the app online for an instructor demo
+
+The GitHub page contains source code; it does not run the app. To get a shareable website URL, use MongoDB Atlas for the hosted database and Render for the Node.js app.
+
+1. In MongoDB Atlas, create a free cluster, create a database user, and copy the cluster connection string. Add a strong database password in Atlas. For a short demo, the Atlas network access list can allow `0.0.0.0/0` so Render can connect; use a unique password and keep the connection string private.
+2. In Render, create a **Web Service** from the `KunalSahu2005/Taskflow-task-manager` GitHub repository. Set **Build Command** to `npm install` and **Start Command** to `npm start`.
+3. In the Render service's **Environment** settings, add `MONGODB_URI` with the Atlas connection string, `SESSION_SECRET` with a long private random value, and `NODE_ENV` with `production`. Do not add these secrets to GitHub.
+4. Wait for the deploy to finish, then open the `onrender.com` URL shown in Render and share it with your instructor.
+
+Free Render services can go to sleep after 15 minutes without traffic; the first visit after that may take about a minute to wake up. Atlas free clusters are intended for learning and small demos.
+
 ## View your saved data
 
-MongoDB stores three collections in the `task_manager` database:
+MongoDB stores these collections in the `task_manager` database:
 
 - `users`: account name, email, and hashed password
 - `tasks`: task details and the ID of the account that owns each task
+- `classes`: each user's recurring weekly class schedule
+- `attendances`: each class's daily result (attended or not attended); weekly totals count attended classes
 - `sessions`: login session data
 
 To view the data, install/open **MongoDB Compass**, connect to `mongodb://127.0.0.1:27017`, and select `task_manager`. Collections appear after you register or add a task.
@@ -90,6 +107,12 @@ task-manager/
 | POST | `/api/tasks` | Add a task |
 | PUT | `/api/tasks/:id` | Edit a task or its status |
 | DELETE | `/api/tasks/:id` | Delete a task |
+| GET | `/api/classes` | List the signed-in user's weekly classes |
+| POST | `/api/classes` | Add a subject, weekday, and start time to the timetable |
+| PUT | `/api/classes/:id` | Edit the subject, weekday, or time |
+| DELETE | `/api/classes/:id` | Remove a class from the timetable |
+| GET | `/api/attendance?weekStart=YYYY-MM-DD` | Get attendance recorded for a week |
+| POST | `/api/attendance/mark` | Save a class as attended or not attended |
 
 ## Upload to GitHub
 
@@ -112,7 +135,10 @@ task-manager/
 1. Register an account. Explain that passwords are hashed and login uses a server-side session.
 2. Add a task with a due date, then edit it.
 3. Mark it completed, filter the list, and search for it.
-4. Delete a task and log out.
-5. Open MongoDB Compass and show the `users` and `tasks` collections.
+4. Choose a weekday button, then add a subject, select one or more weekdays, and enter its class time.
+5. Use **Edit** or **×** to change or delete that weekday's subject. The timetable repeats weekly.
+6. Choose **Attended** or **Not attended** for a class on any date, including past and future dates. Review both weekly counts for every subject.
+7. Delete a task and log out.
+8. Open MongoDB Compass and show the `users`, `tasks`, `classes`, and `attendances` collections.
 
 This is a learning project. Before using it as a public production service, add HTTPS, CSRF protection, rate limiting, and secure secret management.
