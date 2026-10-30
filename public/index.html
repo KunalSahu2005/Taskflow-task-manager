@@ -36,7 +36,26 @@
       <section class="tasks-section"><div class="section-heading"><div><p class="eyebrow">YOUR WORK, YOUR PACE</p><h2>My tasks <span id="heading-count" class="heading-count">0</span></h2></div><button id="open-create" class="button primary"><span class="plus">+</span> Add a task</button></div>
         <div class="toolbar"><div class="filter-tabs" role="group" aria-label="Filter tasks"><button class="filter active" data-filter="all">All <span id="filter-all">0</span></button><button class="filter" data-filter="pending">In progress <span id="filter-pending">0</span></button><button class="filter" data-filter="completed">Completed <span id="filter-completed">0</span></button></div><label class="search-box"><span>⌕</span><input id="search" type="search" placeholder="Find a task..."></label></div>
         <div id="task-list" class="task-list"></div>
-      </section><footer class="app-footer"><span>Made for steady progress <span class="heart">✦</span></span><span>Take it one step at a time.</span></footer>
+      </section>
+      <section class="classes-section" aria-labelledby="classes-title">
+        <div class="section-heading class-heading"><div><p class="eyebrow">SHOW UP, KEEP COUNT</p><h2 id="classes-title">Weekly class timetable</h2></div><button id="toggle-class-form" class="button secondary"><span class="plus">+</span> Add a class</button></div>
+        <form id="class-form" class="class-form hidden">
+          <input name="classId" type="hidden">
+          <p id="class-form-title" class="class-form-title">Add a subject to a day</p>
+          <label class="field">Subject<input name="subject" maxlength="100" required placeholder="e.g. Mathematics"></label>
+          <fieldset class="class-days-field"><legend>Choose one or more days</legend><div class="class-day-options"><label><input name="daysOfWeek" type="checkbox" value="1"> Monday</label><label><input name="daysOfWeek" type="checkbox" value="2"> Tuesday</label><label><input name="daysOfWeek" type="checkbox" value="3"> Wednesday</label><label><input name="daysOfWeek" type="checkbox" value="4"> Thursday</label><label><input name="daysOfWeek" type="checkbox" value="5"> Friday</label><label><input name="daysOfWeek" type="checkbox" value="6"> Saturday</label><label><input name="daysOfWeek" type="checkbox" value="7"> Sunday</label></div></fieldset>
+          <label class="field">Start time<input name="startTime" type="time" required></label>
+          <button class="button primary class-save" type="submit">Save subject</button>
+          <button id="cancel-class-edit" class="button secondary class-cancel hidden" type="button">Cancel</button>
+          <p id="class-message" class="message" role="status"></p>
+        </form>
+        <p class="class-help">Select several days to add the same subject and time to each. The timetable repeats each week; edit or delete a class for a specific day when needed.</p>
+        <div class="week-toolbar"><button id="previous-week" class="button secondary" type="button">← Previous</button><strong id="class-week-label"></strong><button id="next-week" class="button secondary" type="button">Next →</button></div>
+        <nav id="class-day-tabs" class="class-day-tabs" aria-label="Choose a day of the week"></nav>
+        <div id="attendance-summary" class="attendance-summary"></div>
+        <div id="class-week-list" class="class-week-list"></div>
+      </section>
+      <footer class="app-footer"><span>Made for steady progress <span class="heart">✦</span></span><span>Take it one step at a time.</span></footer>
     </section>
   </main>
 

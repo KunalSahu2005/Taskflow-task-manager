@@ -9,7 +9,11 @@ const taskList = document.querySelector('#task-list');
 let mode = 'login';
 let currentUser = null;
 let tasks = [];
+let classSchedules = [];
+let weeklyAttendance = [];
 let activeFilter = 'all';
+let selectedWeekStart = mondayIso(new Date());
+let selectedDay = new Date().getDay() || 7;
 let toastTimer;
 
 async function api(url, options = {}) {
@@ -47,6 +51,7 @@ function showApp(user) {
   document.querySelector('#welcome-title').textContent = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
   document.querySelector('#today-label').textContent = new Intl.DateTimeFormat(undefined, { weekday: 'long', month: 'short', day: 'numeric' }).format(new Date());
   loadTasks();
+  loadClasses();
 }
 
 function setMode(nextMode) {
@@ -78,6 +83,8 @@ document.querySelector('#logout').addEventListener('click', async () => {
   try { await api('/api/logout', { method: 'POST' }); } catch (_) { /* local view still returns to login */ }
   currentUser = null;
   tasks = [];
+  classSchedules = [];
+  weeklyAttendance = [];
   showAuth();
 });
 
@@ -220,5 +227,293 @@ async function deleteTask(id) {
     showToast('Task deleted.');
   } catch (error) { showToast(error.message); }
 }
+
+function isoLocal(date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+function mondayIso(date) {
+  const monday = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  monday.setDate(monday.getDate() - ((monday.getDay() + 6) % 7));
+  return isoLocal(monday);
+}
+
+function shiftIsoDate(isoDate, amount) {
+  const date = new Date(`${isoDate}T00:00:00`);
+  date.setDate(date.getDate() + amount);
+  return isoLocal(date);
+}
+
+function displayDate(isoDate, options = { month: 'short', day: 'numeric' }) {
+  return new Intl.DateTimeFormat(undefined, options).format(new Date(`${isoDate}T00:00:00`));
+}
+
+function weekDayLabel(dayNumber) {
+  return ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'][dayNumber - 1];
+}
+
+function formatClassTime(time) {
+  const [hour, minute] = time.split(':').map(Number);
+  return new Intl.DateTimeFormat(undefined, { hour: 'numeric', minute: '2-digit' }).format(new Date(2000, 0, 1, hour, minute));
+}
+
+async function loadClasses() {
+  try {
+    const [classData, attendanceData] = await Promise.all([
+      api('/api/classes'),
+      api(`/api/attendance?weekStart=${encodeURIComponent(selectedWeekStart)}`)
+    ]);
+    classSchedules = classData.classes;
+    weeklyAttendance = attendanceData.records;
+    renderClasses();
+  } catch (error) {
+    if (error.message.includes('log in')) showAuth();
+    else showToast(error.message);
+  }
+}
+
+function renderClasses() {
+  const weekEnd = shiftIsoDate(selectedWeekStart, 6);
+  const currentWeek = selectedWeekStart === mondayIso(new Date());
+  const range = `${displayDate(selectedWeekStart)} – ${displayDate(weekEnd, { month: 'short', day: 'numeric', year: 'numeric' })}`;
+  document.querySelector('#class-week-label').textContent = currentWeek ? `This week · ${range}` : range;
+
+  const summary = document.querySelector('#attendance-summary');
+  summary.replaceChildren();
+  const total = document.createElement('article');
+  total.className = 'attendance-total';
+  const attendedRecords = weeklyAttendance.filter(record => record.status === 'attended');
+  const absentRecords = weeklyAttendance.filter(record => record.status === 'absent');
+  total.innerHTML = `<span>This week's results</span><strong>${attendedRecords.length} attended</strong><small>${absentRecords.length} not attended</small>`;
+  summary.append(total);
+  const subjectNames = new Set([
+    ...classSchedules.map(item => item.subject),
+    ...weeklyAttendance.map(record => record.subject)
+  ]);
+  const subjects = [...subjectNames].sort((a, b) => a.localeCompare(b));
+  if (!subjects.length) {
+    const empty = document.createElement('div');
+    empty.className = 'attendance-empty';
+    empty.textContent = 'Add subjects to see this week’s attendance counts.';
+    summary.append(empty);
+  } else {
+    for (const subject of subjects) {
+      const attendedCount = attendedRecords.filter(record => record.subject === subject).length;
+      const absentCount = absentRecords.filter(record => record.subject === subject).length;
+      const card = document.createElement('article');
+      card.className = 'subject-total';
+      const name = document.createElement('span');
+      name.textContent = subject;
+      const attended = document.createElement('strong');
+      attended.textContent = `Attended: ${attendedCount}`;
+      const caption = document.createElement('small');
+      caption.textContent = `Not attended: ${absentCount}`;
+      card.append(name, attended, caption);
+      summary.append(card);
+    }
+  }
+
+  const list = document.querySelector('#class-week-list');
+  renderClassDayTabs();
+  list.replaceChildren();
+  const dayDate = shiftIsoDate(selectedWeekStart, selectedDay - 1);
+  const dayClasses = classSchedules.filter(item => item.dayOfWeek === selectedDay).sort((a, b) => a.startTime.localeCompare(b.startTime));
+  const group = document.createElement('section');
+  group.className = 'day-group';
+  const heading = document.createElement('div');
+  heading.className = 'day-heading';
+  const dayName = document.createElement('strong');
+  dayName.textContent = weekDayLabel(selectedDay);
+  const date = document.createElement('span');
+  date.textContent = displayDate(dayDate, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+  heading.append(dayName, date);
+  group.append(heading);
+
+  if (!dayClasses.length) {
+    const empty = document.createElement('div');
+    empty.className = 'empty-state class-empty';
+    empty.innerHTML = '<div class="empty-icon">▦</div><h3>No subjects for this day</h3><p>Add a subject using the button above. It will appear on this weekday each week.</p>';
+    group.append(empty);
+  } else {
+    for (const classItem of dayClasses) {
+      const record = weeklyAttendance.find(item => String(item.classId) === classItem.id && item.classDate === dayDate);
+      const status = record?.status || null;
+      const card = document.createElement('article');
+      card.className = `class-card${status ? ` ${status}` : ''}`;
+      const time = document.createElement('time');
+      time.className = 'class-time';
+      time.textContent = formatClassTime(classItem.startTime);
+      const details = document.createElement('div');
+      details.className = 'class-details';
+      const subject = document.createElement('strong');
+      subject.textContent = classItem.subject;
+      const dateLabel = document.createElement('span');
+      dateLabel.textContent = `${weekDayLabel(selectedDay)} · ${displayDate(dayDate, { month: 'short', day: 'numeric' })}`;
+      details.append(subject, dateLabel);
+      const attendanceActions = document.createElement('div');
+      attendanceActions.className = 'attendance-actions';
+      for (const option of [
+        { value: 'attended', label: 'Attended' },
+        { value: 'absent', label: 'Not attended' }
+      ]) {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = `attendance-button${status === option.value ? ` is-${option.value}` : ''}`;
+        button.textContent = status === option.value ? `✓ ${option.label}` : option.label;
+        button.setAttribute('aria-pressed', String(status === option.value));
+        button.addEventListener('click', () => markAttendance(classItem, dayDate, option.value));
+        attendanceActions.append(button);
+      }
+      const editButton = document.createElement('button');
+      editButton.type = 'button';
+      editButton.className = 'class-edit';
+      editButton.textContent = 'Edit';
+      editButton.setAttribute('aria-label', `Edit ${classItem.subject} class`);
+      editButton.addEventListener('click', () => editClass(classItem));
+      const removeButton = document.createElement('button');
+      removeButton.type = 'button';
+      removeButton.className = 'class-remove';
+      removeButton.textContent = '×';
+      removeButton.title = 'Remove class from timetable';
+      removeButton.setAttribute('aria-label', `Remove ${classItem.subject} from timetable`);
+      removeButton.addEventListener('click', () => removeClass(classItem));
+      card.append(time, details, attendanceActions, editButton, removeButton);
+      group.append(card);
+    }
+  }
+  list.append(group);
+}
+
+function renderClassDayTabs() {
+  const tabs = document.querySelector('#class-day-tabs');
+  tabs.replaceChildren();
+  for (let day = 1; day <= 7; day += 1) {
+    const date = shiftIsoDate(selectedWeekStart, day - 1);
+    const count = classSchedules.filter(item => item.dayOfWeek === day).length;
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = `class-day-tab${day === selectedDay ? ' active' : ''}`;
+    button.setAttribute('aria-pressed', String(day === selectedDay));
+    button.innerHTML = `<span>${weekDayLabel(day).slice(0, 3)}</span><small>${displayDate(date, { day: 'numeric' })} · ${count}</small>`;
+    button.addEventListener('click', () => {
+      selectedDay = day;
+      renderClasses();
+    });
+    tabs.append(button);
+  }
+}
+
+async function markAttendance(classItem, classDate, status) {
+  try {
+    const result = await api('/api/attendance/mark', {
+      method: 'POST',
+      body: { classId: classItem.id, classDate, status }
+    });
+    await loadClasses();
+    showToast(result.message);
+  } catch (error) { showToast(error.message); }
+}
+
+function editClass(classItem) {
+  const form = document.querySelector('#class-form');
+  form.elements.classId.value = classItem.id;
+  form.elements.subject.value = classItem.subject;
+  setClassDays([classItem.dayOfWeek]);
+  form.elements.startTime.value = classItem.startTime;
+  document.querySelector('#class-form-title').textContent = 'Edit this weekly class';
+  form.querySelector('.class-save').textContent = 'Save changes';
+  document.querySelector('#cancel-class-edit').classList.remove('hidden');
+  form.classList.remove('hidden');
+  form.elements.subject.focus();
+  form.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+function resetClassForm() {
+  const form = document.querySelector('#class-form');
+  form.reset();
+  form.elements.classId.value = '';
+  setClassDays([selectedDay]);
+  form.classList.add('hidden');
+  document.querySelector('#class-form-title').textContent = 'Add a subject to a day';
+  form.querySelector('.class-save').textContent = 'Save subject';
+  document.querySelector('#cancel-class-edit').classList.add('hidden');
+  document.querySelector('#class-message').textContent = '';
+}
+
+function setClassDays(days) {
+  const selected = new Set(days.map(Number));
+  document.querySelectorAll('#class-form input[name="daysOfWeek"]').forEach(input => {
+    input.checked = selected.has(Number(input.value));
+  });
+}
+
+async function removeClass(classItem) {
+  if (!window.confirm(`Remove ${classItem.subject} from your weekly timetable? Past attendance totals will stay saved.`)) return;
+  try {
+    await api(`/api/classes/${classItem.id}`, { method: 'DELETE' });
+    await loadClasses();
+    showToast('Class removed from your timetable.');
+  } catch (error) { showToast(error.message); }
+}
+
+document.querySelector('#toggle-class-form').addEventListener('click', () => {
+  const form = document.querySelector('#class-form');
+  if (!form.classList.contains('hidden')) { resetClassForm(); return; }
+  form.reset();
+  form.elements.classId.value = '';
+  setClassDays([selectedDay]);
+  document.querySelector('#class-form-title').textContent = 'Add a subject to a day';
+  form.querySelector('.class-save').textContent = 'Save subject';
+  document.querySelector('#cancel-class-edit').classList.add('hidden');
+  form.classList.remove('hidden');
+  document.querySelector('#class-message').textContent = '';
+  if (!form.classList.contains('hidden')) form.elements.subject.focus();
+});
+document.querySelector('#cancel-class-edit').addEventListener('click', resetClassForm);
+document.querySelectorAll('#class-form input[name="daysOfWeek"]').forEach(input => {
+  input.addEventListener('change', () => {
+    const form = document.querySelector('#class-form');
+    if (form.elements.classId.value && input.checked) {
+      document.querySelectorAll('#class-form input[name="daysOfWeek"]').forEach(other => {
+        if (other !== input) other.checked = false;
+      });
+    }
+  });
+});
+
+document.querySelector('#class-form').addEventListener('submit', async (event) => {
+  event.preventDefault();
+  const form = event.currentTarget;
+  const message = document.querySelector('#class-message');
+  message.textContent = '';
+  try {
+    const classId = form.elements.classId.value;
+    const chosenDays = [...form.querySelectorAll('input[name="daysOfWeek"]:checked')].map(input => Number(input.value));
+    if (!chosenDays.length) throw new Error('Select at least one day.');
+    const result = await api(classId ? `/api/classes/${classId}` : '/api/classes', {
+      method: classId ? 'PUT' : 'POST',
+      body: {
+        subject: form.elements.subject.value,
+        dayOfWeek: classId ? chosenDays[0] : chosenDays,
+        startTime: form.elements.startTime.value
+      }
+    });
+    resetClassForm();
+    await loadClasses();
+    showToast(result.message);
+  } catch (error) { message.textContent = error.message; }
+});
+
+document.querySelector('#previous-week').addEventListener('click', () => {
+  selectedWeekStart = shiftIsoDate(selectedWeekStart, -7);
+  loadClasses();
+});
+document.querySelector('#next-week').addEventListener('click', () => {
+  selectedWeekStart = shiftIsoDate(selectedWeekStart, 7);
+  loadClasses();
+});
 
 api('/api/me').then(data => data.user ? showApp(data.user) : showAuth()).catch(() => showAuth());
