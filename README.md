@@ -1,144 +1,126 @@
-# Taskflow — Full Stack Task Manager
+# ✅ Taskflow – Full Stack Task Manager
 
-A beginner-friendly full stack internship project. Users can register, log in with a server-side session, and manage their own tasks. It uses **MongoDB**, not MySQL, and does **not** use JWT.
+Taskflow is a full-stack web application for organizing personal tasks and tracking weekly class attendance. Create an account, manage your to-do list, build a timetable, and review attended and missed classes by subject.
 
-## Features
+This project was created for learning and internship demonstration. It uses MongoDB for data storage and server-side sessions for login; it does not use JWT or MySQL.
 
-- Register and log in; passwords are hashed before they are saved.
-- Login sessions are stored in MongoDB.
-- Add, edit, complete, search, filter, and delete tasks.
-- Optional task descriptions and due dates.
-- Add a subject and start time to one or more weekdays at once. The schedule repeats weekly.
-- View one weekday at a time using the Monday–Sunday buttons; add or delete subjects separately for each weekday.
-- Edit or remove a class when that weekday's schedule changes.
-- Mark a class on any past, current, or future date as **Attended** or **Not attended**. Weekly totals show both counts for every subject.
-- Each user can access only their own tasks.
-- Responsive dashboard with task counts.
+---
 
-## Technology
+## ✨ Features
 
-- Front end: HTML, CSS, JavaScript
-- Back end: Node.js and Express
-- Database: MongoDB, using Mongoose
-- Authentication: Express sessions (no JWT)
+- 🔐 Register and log in with a hashed password
+- 📝 Create, edit, complete, search, filter, and delete tasks
+- 📅 Add a class subject and time to one or more weekdays at once
+- ✏️ Edit or delete classes for an individual weekday
+- ✅ Mark a class attended or not attended, including for past and future dates
+- 📊 View weekly attended and not-attended counts for each subject
+- 👤 Keep each user's tasks, timetable, and attendance private to their account
+- 📱 Responsive layout for desktop and mobile screens
 
-## One-time setup on Windows
+---
 
-### 1. Install MongoDB Server
+## 🛠️ Tech Stack
 
-Install **MongoDB Community Server** for Windows from the [official MongoDB download page](https://www.mongodb.com/try/download/community). During setup, keep **Install MongoDB as a Service** selected. The service runs the database on your computer.
+### Frontend
 
-You do not need MySQL Workbench or `database.sql` for this version. MongoDB creates the `task_manager` database and collections automatically when the app first saves data.
+- HTML5
+- CSS3
+- JavaScript
 
-### 2. Set up this project
+### Backend
 
-Open PowerShell in the `task-manager` folder. If PowerShell blocks `npm`, use `npm.cmd`:
+- Node.js
+- Express.js
+- Express sessions (no JWT)
+- bcryptjs for password hashing
+
+### Database
+
+- MongoDB
+- Mongoose
+- connect-mongo for storing login sessions
+
+---
+
+## 📂 Folder Structure
+
+```text
+Taskflow-task-manager/
+├── public/
+│   ├── app.js          # Browser actions and API requests
+│   ├── index.html      # Login, tasks, timetable, and attendance interface
+│   └── styles.css      # Responsive styling
+├── .env.example        # Example local environment settings
+├── .gitignore          # Keeps .env and node_modules out of Git
+├── package.json        # Project scripts and dependencies
+├── package-lock.json   # Locked dependency versions
+├── README.md           # Project guide
+└── server.js           # Express server, API, and MongoDB models
+```
+
+---
+
+## ⚙️ Run Locally on Windows
+
+### 1. Install the requirements
+
+Install [Node.js](https://nodejs.org/) and [MongoDB Community Server](https://www.mongodb.com/try/download/community). During MongoDB setup, leave **Install MongoDB as a Service** selected.
+
+### 2. Download the project and install its packages
+
+Open PowerShell in the project folder and run:
 
 ```powershell
 npm.cmd install
 ```
 
-In the same folder, copy `.env.example` and rename the copy to `.env`. Open `.env` and replace the sample `SESSION_SECRET` with a long private value. The default MongoDB address works with the local MongoDB service:
+### 3. Set up the environment file
+
+Copy `.env.example` and name the copy `.env`. The local MongoDB connection should look like this:
 
 ```text
 MONGODB_URI=mongodb://127.0.0.1:27017/task_manager
 ```
 
-Do not upload `.env` to GitHub. `.gitignore` prevents it from being uploaded.
+Set a private value for `SESSION_SECRET` in `.env`. Do not upload `.env` to GitHub; `.gitignore` excludes it.
 
-### 3. Run the app
+### 4. Start Taskflow
 
 ```powershell
 npm.cmd start
 ```
 
-Open **http://localhost:3000** in your browser and create an account. Keep the PowerShell window open while using the app. To stop the app, press **Ctrl+C** in that window.
+Open [http://localhost:3000](http://localhost:3000) and create an account. Keep PowerShell open while using the app. Press **Ctrl+C** in PowerShell to stop it.
 
-If you installed the earlier MySQL version of this project, run `npm.cmd install` again after changing to these project files. It installs the MongoDB packages and updates `package-lock.json`.
+---
 
-## Put the app online for an instructor demo
+## 🗄️ Database
 
-The GitHub page contains source code; it does not run the app. To get a shareable website URL, use MongoDB Atlas for the hosted database and Render for the Node.js app.
-
-1. In MongoDB Atlas, create a free cluster, create a database user, and copy the cluster connection string. Add a strong database password in Atlas. For a short demo, the Atlas network access list can allow `0.0.0.0/0` so Render can connect; use a unique password and keep the connection string private.
-2. In Render, create a **Web Service** from the `KunalSahu2005/Taskflow-task-manager` GitHub repository. Set **Build Command** to `npm install` and **Start Command** to `npm start`.
-3. In the Render service's **Environment** settings, add `MONGODB_URI` with the Atlas connection string, `SESSION_SECRET` with a long private random value, and `NODE_ENV` with `production`. Do not add these secrets to GitHub.
-4. Wait for the deploy to finish, then open the `onrender.com` URL shown in Render and share it with your instructor.
-
-Free Render services can go to sleep after 15 minutes without traffic; the first visit after that may take about a minute to wake up. Atlas free clusters are intended for learning and small demos.
-
-## View your saved data
-
-MongoDB stores these collections in the `task_manager` database:
-
-- `users`: account name, email, and hashed password
-- `tasks`: task details and the ID of the account that owns each task
-- `classes`: each user's recurring weekly class schedule
-- `attendances`: each class's daily result (attended or not attended); weekly totals count attended classes
-- `sessions`: login session data
-
-To view the data, install/open **MongoDB Compass**, connect to `mongodb://127.0.0.1:27017`, and select `task_manager`. Collections appear after you register or add a task.
-
-## Project files
+The app creates the `task_manager` database and collections when it saves data. To view them, open MongoDB Compass and connect to:
 
 ```text
-task-manager/
-├── public/
-│   ├── app.js          # Browser behavior and API calls
-│   ├── index.html      # Login, registration, dashboard, and task form
-│   └── styles.css      # Responsive page styling
-├── .env.example        # Example local settings
-├── .gitignore          # Keeps secrets and installed packages out of Git
-├── package.json        # Project scripts and packages
-├── package-lock.json   # Generated by npm install
-├── README.md           # Setup and GitHub instructions
-└── server.js           # Express API, MongoDB models, and sessions
+mongodb://127.0.0.1:27017
 ```
 
-## API routes
+Collections used by the project:
 
-| Method | Route | Purpose |
-| --- | --- | --- |
-| POST | `/api/register` | Create an account and start a session |
-| POST | `/api/login` | Sign in and start a session |
-| POST | `/api/logout` | End the session |
-| GET | `/api/me` | Return the signed-in user |
-| GET | `/api/tasks` | List the signed-in user's tasks |
-| POST | `/api/tasks` | Add a task |
-| PUT | `/api/tasks/:id` | Edit a task or its status |
-| DELETE | `/api/tasks/:id` | Delete a task |
-| GET | `/api/classes` | List the signed-in user's weekly classes |
-| POST | `/api/classes` | Add a subject, weekday, and start time to the timetable |
-| PUT | `/api/classes/:id` | Edit the subject, weekday, or time |
-| DELETE | `/api/classes/:id` | Remove a class from the timetable |
-| GET | `/api/attendance?weekStart=YYYY-MM-DD` | Get attendance recorded for a week |
-| POST | `/api/attendance/mark` | Save a class as attended or not attended |
+- `users` – account details and hashed passwords
+- `tasks` – each user's task list
+- `classes` – weekly class timetable
+- `attendances` – attendance result for a subject on a date
+- `sessions` – signed-in user sessions
 
-## Upload to GitHub
+---
 
-1. Create a new empty repository on GitHub, for example `taskflow-task-manager`. Do not add a README there.
-2. In PowerShell, go to the project folder and run these commands. Replace `YOUR-USERNAME` with your GitHub username:
+## 👨‍💻 Author
 
-   ```powershell
-   git init
-   git add .
-   git commit -m "Build Taskflow task manager with MongoDB"
-   git branch -M main
-   git remote add origin https://github.com/YOUR-USERNAME/taskflow-task-manager.git
-   git push -u origin main
-   ```
+**Kunal Sahu**
 
-3. Check the GitHub repository page. It should contain `.env.example`, but must not contain `.env` or `node_modules`.
+- GitHub: [KunalSahu2005](https://github.com/KunalSahu2005)
+- Project repository: [Taskflow-task-manager](https://github.com/KunalSahu2005/Taskflow-task-manager)
 
-## Demo for your instructor
+---
 
-1. Register an account. Explain that passwords are hashed and login uses a server-side session.
-2. Add a task with a due date, then edit it.
-3. Mark it completed, filter the list, and search for it.
-4. Choose a weekday button, then add a subject, select one or more weekdays, and enter its class time.
-5. Use **Edit** or **×** to change or delete that weekday's subject. The timetable repeats weekly.
-6. Choose **Attended** or **Not attended** for a class on any date, including past and future dates. Review both weekly counts for every subject.
-7. Delete a task and log out.
-8. Open MongoDB Compass and show the `users`, `tasks`, `classes`, and `attendances` collections.
+## 📄 Project Note
 
-This is a learning project. Before using it as a public production service, add HTTPS, CSRF protection, rate limiting, and secure secret management.
+Taskflow is an educational portfolio project. The GitHub repository contains the source code. To let someone open the working app from a link, deploy the Node.js app and MongoDB database to hosting services and add the deployed URL to this README.
