@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f6f7fb">
+  <title>Taskflow | Stay on top of your day</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/styles.css">
+  <script src="/app.js" defer></script>
+</head>
+<body>
+  <main id="auth-view" class="auth-layout">
+    <section class="auth-card">
+      <a class="brand" href="/"><span class="brand-mark">✓</span><span>taskflow</span></a>
+      <div class="auth-copy"><p class="eyebrow">YOUR DAY, IN FOCUS</p><h1 id="auth-title">Make room for what matters.</h1><p id="auth-subtitle">A calmer way to capture tasks and keep your momentum.</p></div>
+      <form id="auth-form">
+        <label id="name-wrap" class="field hidden">Your name<input name="name" autocomplete="name" maxlength="100" placeholder="e.g. Alex Morgan"></label>
+        <label class="field">Email address<input name="email" type="email" autocomplete="email" required placeholder="you@example.com"></label>
+        <label class="field">Password<input name="password" type="password" autocomplete="current-password" minlength="8" required placeholder="At least 8 characters"></label>
+        <button id="auth-submit" class="button primary full" type="submit">Log in <span>→</span></button>
+      </form>
+      <p class="auth-switch"><span id="switch-copy">New to Taskflow?</span> <button id="switch-mode" class="text-button" type="button">Create an account</button></p>
+      <p id="auth-message" class="message" role="status"></p>
+      <p class="auth-foot">A simple workspace for your next step.</p>
+    </section>
+    <aside class="auth-art"><div class="art-orbit orbit-one"></div><div class="art-orbit orbit-two"></div><div class="art-content"><div class="spark">✦</div><p class="eyebrow">SMALL STEPS. REAL PROGRESS.</p><h2>One clear list.<br>More room to think.</h2><div class="preview-card"><div class="preview-top"><span class="preview-dot"></span><span>Today</span><span class="preview-date">MY PLAN</span></div><div class="preview-task"><span class="check checked">✓</span><span class="done">Review project notes</span></div><div class="preview-task"><span class="check"></span><span>Build something useful</span><span class="tag">IN FOCUS</span></div><div class="preview-task"><span class="check"></span><span>Take a proper break</span></div><div class="preview-progress"><span></span></div><p>You're finding your rhythm <b>↗</b></p></div></div><div class="art-caption">A little progress goes a long way.</div></aside>
+  </main>
+
+  <main id="app-view" class="app-shell hidden">
+    <aside class="sidebar"><a class="brand" href="/"><span class="brand-mark">✓</span><span>taskflow</span></a><div class="workspace-label">WORKSPACE</div><button class="side-link active"><span class="side-icon">▦</span> My tasks <span id="nav-count" class="nav-count">0</span></button><div class="sidebar-note"><span class="note-icon">✦</span><p>Progress is built one task at a time.</p><span>Keep going — you’ve got this.</span></div><div class="profile"><div id="avatar" class="avatar">A</div><div class="profile-copy"><b id="profile-name">Your name</b><span id="profile-email">you@example.com</span></div><button id="logout" class="logout" title="Log out" aria-label="Log out">↗</button></div></aside>
+    <section class="main-panel"><header class="topbar"><div><p class="eyebrow">PERSONAL WORKSPACE</p><div class="welcome-line"><h1 id="welcome-title">Good morning</h1><span class="sun">☼</span></div></div><div id="today-label" class="today-label"></div></header>
+      <section class="summary-row"><article class="summary-card total-card"><div class="summary-top"><span>All tasks</span><span class="summary-icon">◫</span></div><strong id="total-count">0</strong><span class="summary-foot">Tasks on your list</span></article><article class="summary-card pending-card"><div class="summary-top"><span>In progress</span><span class="summary-icon">◷</span></div><strong id="pending-count">0</strong><span class="summary-foot">Ready for your next step</span></article><article class="summary-card completed-card"><div class="summary-top"><span>Completed</span><span class="summary-icon">✓</span></div><strong id="completed-count">0</strong><span class="summary-foot">Look how far you’ve come</span></article></section>
+      <section class="tasks-section"><div class="section-heading"><div><p class="eyebrow">YOUR WORK, YOUR PACE</p><h2>My tasks <span id="heading-count" class="heading-count">0</span></h2></div><button id="open-create" class="button primary"><span class="plus">+</span> Add a task</button></div>
+        <div class="toolbar"><div class="filter-tabs" role="group" aria-label="Filter tasks"><button class="filter active" data-filter="all">All <span id="filter-all">0</span></button><button class="filter" data-filter="pending">In progress <span id="filter-pending">0</span></button><button class="filter" data-filter="completed">Completed <span id="filter-completed">0</span></button></div><label class="search-box"><span>⌕</span><input id="search" type="search" placeholder="Find a task..."></label></div>
+        <div id="task-list" class="task-list"></div>
+      </section><footer class="app-footer"><span>Made for steady progress <span class="heart">✦</span></span><span>Take it one step at a time.</span></footer>
+    </section>
+  </main>
+
+  <div id="task-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="modal-title"><div class="modal-backdrop" data-close></div><form id="task-form" class="modal-card"><button type="button" class="modal-close" data-close aria-label="Close">×</button><p class="eyebrow">MAKE IT HAPPEN</p><h2 id="modal-title">Add a task</h2><p class="modal-subtitle">Give your next step a name. You can add details too.</p><input name="taskId" type="hidden"><label class="field">Task title<input name="title" maxlength="200" required placeholder="What needs to get done?"></label><label class="field">Description <span class="optional">Optional</span><textarea name="description" maxlength="2000" rows="3" placeholder="Add a few helpful details..."></textarea></label><label class="field">Due date <span class="optional">Optional</span><input name="dueDate" type="date"></label><div class="modal-actions"><button type="button" class="button secondary" data-close>Cancel</button><button id="save-task" class="button primary" type="submit">Add task <span>→</span></button></div><p id="task-message" class="message" role="status"></p></form></div>
+  <div id="toast" class="toast" role="status"></div>
+</body>
+</html>
